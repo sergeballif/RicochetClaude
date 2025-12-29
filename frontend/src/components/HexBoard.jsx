@@ -1,6 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { HexUtils } from '../utils/hexUtils';
 
+// Color mapping for robots and targets - muted versions
+const COLOR_MAP = {
+  red: '#ef4444',
+  blue: '#3b82f6',
+  green: '#22c55e',
+  yellow: '#eab308'
+};
+
 const HexBoard = ({
   gameState,
   onHexClick,
@@ -100,7 +108,7 @@ const HexBoard = ({
     ctx.closePath();
 
     if (highlighted) {
-      ctx.fillStyle = 'rgba(74, 158, 255, 0.3)';
+      ctx.fillStyle = 'rgba(106, 155, 195, 0.3)'; /* Muted blue */
       ctx.fill();
 
       // Draw direction indicator
@@ -109,7 +117,7 @@ const HexBoard = ({
         const dirCenter = HexUtils.hexToPixel(dirHex, hexSize);
         const angle = Math.atan2(dirCenter.y - center.y, dirCenter.x - center.x);
 
-        ctx.strokeStyle = 'rgba(74, 158, 255, 0.6)';
+        ctx.strokeStyle = 'rgba(106, 155, 195, 0.6)'; /* Muted blue */
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(center.x, center.y);
@@ -120,8 +128,10 @@ const HexBoard = ({
         ctx.stroke();
       }
     } else {
-      ctx.strokeStyle = '#333';
+      ctx.strokeStyle = '#0b0b0bff';
       ctx.lineWidth = 1;
+      ctx.fillStyle = 'rgba(54, 54, 54, 1)'; /* Dark Gray */
+      ctx.fill();
       ctx.stroke();
     }
   };
@@ -129,9 +139,9 @@ const HexBoard = ({
   const drawWalls = (ctx) => {
     ctx.lineCap = 'round';
 
-    // Draw perimeter walls (border) in orange
+    // Draw perimeter walls (border) in muted orange
     if (gameState.perimeterWalls) {
-      ctx.strokeStyle = '#ff8c42';
+      ctx.strokeStyle = '#c8834a'; /* Muted orange */
       ctx.lineWidth = 5;
 
       gameState.perimeterWalls.forEach(edgeKey => {
@@ -148,9 +158,9 @@ const HexBoard = ({
       });
     }
 
-    // Draw internal walls in orange
+    // Draw internal walls in muted orange
     if (gameState.internalWalls) {
-      ctx.strokeStyle = '#ff8c42';
+      ctx.strokeStyle = '#c8834a'; /* Muted orange */
       ctx.lineWidth = 4;
 
       gameState.internalWalls.forEach(edgeKey => {
@@ -172,6 +182,9 @@ const HexBoard = ({
     const center = HexUtils.hexToPixel(hex, hexSize);
     const radius = hexSize * 0.35;
 
+    // Map color name to hex color
+    const hexColor = COLOR_MAP[color] || color;
+
     // Draw selection ring
     if (selected) {
       ctx.strokeStyle = '#ffffff';
@@ -182,7 +195,7 @@ const HexBoard = ({
     }
 
     // Draw robot body
-    ctx.fillStyle = color;
+    ctx.fillStyle = hexColor;
     ctx.beginPath();
     ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
     ctx.fill();
@@ -197,10 +210,11 @@ const HexBoard = ({
     const center = HexUtils.hexToPixel(target.position, hexSize);
     const size = hexSize * 0.4;
 
-    // Draw star
-    ctx.fillStyle = target.color;
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 2;
+    // Map color name to hex color
+    const hexColor = COLOR_MAP[target.color] || target.color;
+
+    // Draw solid star - no outline, just fill
+    ctx.fillStyle = hexColor;
 
     ctx.beginPath();
     for (let i = 0; i < 5; i++) {
@@ -216,11 +230,10 @@ const HexBoard = ({
     }
     ctx.closePath();
     ctx.fill();
-    ctx.stroke();
 
-    // Draw pulsing outline for emphasis
+    // Draw subtle pulsing outline for emphasis
     const pulseSize = size + 3 + Math.sin(Date.now() / 300) * 2;
-    ctx.strokeStyle = target.color;
+    ctx.strokeStyle = hexColor;
     ctx.lineWidth = 2;
     ctx.globalAlpha = 0.5;
     ctx.beginPath();
@@ -251,7 +264,10 @@ const HexBoard = ({
     trail.forEach((move) => {
       const offset = colorOffsets[move.color] || { x: 0, y: 0 };
 
-      ctx.strokeStyle = move.color;
+      // Map color name to hex color
+      const hexColor = COLOR_MAP[move.color] || move.color;
+
+      ctx.strokeStyle = hexColor;
       ctx.globalAlpha = 0.3;
       ctx.lineWidth = 3;
       ctx.lineCap = 'round';
@@ -372,7 +388,7 @@ const HexBoard = ({
         maxHeight: '100%',
         border: '2px solid #333',
         borderRadius: '10px',
-        background: '#16213e'
+        background: '#232323ff' /* gray board */
       }}
     />
   );

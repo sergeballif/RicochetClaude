@@ -4,7 +4,8 @@ import react from '@vitejs/plugin-react'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: '/RicochetClaude/',
+  // Base path for science.mom/ricochet
+  base: '/ricochet/',
   server: {
     port: 3000
   }
