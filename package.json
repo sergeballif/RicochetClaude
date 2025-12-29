@@ -1,0 +1,16 @@
+{
+  "name": "ricochet-game",
+  "version": "1.0.0",
+  "description": "Real-time multiplayer hexagonal puzzle game",
+  "scripts": {
+    "install-all": "cd backend && npm install && cd ../frontend && npm install",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "start:backend": "cd backend && npm start",
+    "build:frontend": "cd frontend && npm run build",
+    "test:backend": "cd backend && node server.js"
+  },
+  "keywords": ["game", "multiplayer", "hexagonal", "puzzle", "socket.io", "react"],
+  "author": "",
+  "license": "MIT"
+}
