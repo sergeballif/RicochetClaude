@@ -332,6 +332,22 @@ class GameState {
    * Add a new player
    */
   addPlayer(socketId, name, role = 'student') {
+    // In round 0 (practice mode), give each player random positions
+    let playerRobots;
+    let practiceTarget = null;
+    let practiceMoveCount = 0;
+
+    if (this.currentRound === 0) {
+      // Generate random practice positions for this player
+      playerRobots = this.boardGenerator.initializeRobots();
+      const occupiedHexes = Object.values(playerRobots);
+      practiceTarget = this.boardGenerator.generateTarget(occupiedHexes);
+      practiceMoveCount = 0;
+    } else {
+      // In active game, use the shared robot positions
+      playerRobots = JSON.parse(JSON.stringify(this.robots));
+    }
+
     this.players[socketId] = {
       name,
       role,
@@ -340,7 +356,9 @@ class GameState {
       currentSolution: null,
       trail: [],
       roundScore: 0,
-      robots: JSON.parse(JSON.stringify(this.robots)) // Each player has their own robot state
+      robots: playerRobots,
+      practiceTarget: practiceTarget,
+      practiceMoveCount: practiceMoveCount
     };
   }
 
@@ -360,6 +378,28 @@ class GameState {
       return true;
     }
     return false;
+  }
+
+  /**
+   * Respawn practice target for a player (practice mode only)
+   */
+  respawnPracticeTarget(playerId) {
+    const player = this.players[playerId];
+    if (!player || this.currentRound !== 0) {
+      return { success: false };
+    }
+
+    // Generate new practice target
+    const occupiedHexes = Object.values(player.robots);
+    player.practiceTarget = this.boardGenerator.generateTarget(occupiedHexes);
+    player.practiceMoveCount = 0;
+    player.trail = [];
+
+    return {
+      success: true,
+      newTarget: player.practiceTarget,
+      moveCount: 0
+    };
   }
 
   /**
@@ -417,7 +457,9 @@ class GameState {
         roundScore: player.roundScore,
         currentMoves: player.currentMoves,
         robots: player.robots, // Player's own robot state
-        trail: player.trail
+        trail: player.trail,
+        practiceTarget: player.practiceTarget, // Practice mode target
+        practiceMoveCount: player.practiceMoveCount // Practice mode moves
       };
     }
 

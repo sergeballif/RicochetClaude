@@ -114,7 +114,14 @@ io.on('connection', (socket) => {
 
       // Update player's robot position
       player.robots[robotColor] = result.finalPosition;
-      player.currentMoves++;
+
+      // In practice mode (round 0), use practice move count
+      const isPracticeMode = gameState.currentRound === 0;
+      if (isPracticeMode) {
+        player.practiceMoveCount++;
+      } else {
+        player.currentMoves++;
+      }
 
       // Add to trail
       player.trail.push({
@@ -128,19 +135,38 @@ io.on('connection', (socket) => {
         robotColor,
         finalPosition: result.finalPosition,
         path: result.path,
-        currentMoves: player.currentMoves,
+        currentMoves: isPracticeMode ? player.practiceMoveCount : player.currentMoves,
         trail: player.trail
       });
 
-      // Check if target reached
-      const solutionCheck = gameState.checkSolution(
-        socket.id,
-        player.robots,
-        player.currentMoves,
-        player.trail
-      );
+      // Practice mode: check if practice target reached
+      if (isPracticeMode && player.practiceTarget) {
+        const targetReached = player.robots[player.practiceTarget.color].q === player.practiceTarget.position.q &&
+                              player.robots[player.practiceTarget.color].r === player.practiceTarget.position.r &&
+                              player.robots[player.practiceTarget.color].s === player.practiceTarget.position.s;
 
-      if (solutionCheck.solved) {
+        if (targetReached) {
+          // Respawn practice target
+          const respawnResult = gameState.respawnPracticeTarget(socket.id);
+          if (respawnResult.success) {
+            socket.emit('practiceTargetReached', {
+              newTarget: respawnResult.newTarget,
+              moveCount: respawnResult.moveCount
+            });
+          }
+        }
+      }
+
+      // Game mode: check if target reached
+      if (!isPracticeMode) {
+        const solutionCheck = gameState.checkSolution(
+          socket.id,
+          player.robots,
+          player.currentMoves,
+          player.trail
+        );
+
+        if (solutionCheck.solved) {
         // Send solution confirmation to player
         socket.emit('solutionFound', {
           isFirst: solutionCheck.isFirst,
@@ -171,6 +197,7 @@ io.on('connection', (socket) => {
         // If this is the first solution, start countdown checker
         if (solutionCheck.isFirst) {
           startCountdownChecker();
+        }
         }
       }
     } catch (error) {

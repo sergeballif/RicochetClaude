@@ -78,19 +78,18 @@ const HexBoard = ({
     // Draw walls
     drawWalls(ctx);
 
-    // Only draw target and robots if game has started (round > 0)
-    if (gameState.round > 0) {
-      // Draw target
-      if (gameState.target) {
-        drawTarget(ctx, gameState.target);
-      }
+    // Draw robots from player's state
+    if (gameState.playerState && gameState.playerState.robots) {
+      Object.entries(gameState.playerState.robots).forEach(([color, position]) => {
+        drawRobot(ctx, position, color, color === selectedRobot);
+      });
+    }
 
-      // Draw robots from player's state
-      if (gameState.playerState && gameState.playerState.robots) {
-        Object.entries(gameState.playerState.robots).forEach(([color, position]) => {
-          drawRobot(ctx, position, color, color === selectedRobot);
-        });
-      }
+    // Draw target (practice target in round 0, game target in round > 0)
+    if (gameState.round === 0 && gameState.playerState?.practiceTarget) {
+      drawTarget(ctx, gameState.playerState.practiceTarget);
+    } else if (gameState.round > 0 && gameState.target) {
+      drawTarget(ctx, gameState.target);
     }
 
     ctx.restore();
@@ -208,19 +207,19 @@ const HexBoard = ({
 
   const drawTarget = (ctx, target) => {
     const center = HexUtils.hexToPixel(target.position, hexSize);
-    const size = hexSize * 0.4;
+    const outerSize = hexSize * 0.4;
+    const innerSize = outerSize * 0.4; // Inner points are 40% of outer radius
 
     // Map color name to hex color
     const hexColor = COLOR_MAP[target.color] || target.color;
 
-    // Draw solid star - no outline, just fill
-    ctx.fillStyle = hexColor;
-
+    // Draw star with alternating outer and inner points
     ctx.beginPath();
-    for (let i = 0; i < 5; i++) {
-      const angle = (i * 4 * Math.PI) / 5 - Math.PI / 2;
-      const x = center.x + size * Math.cos(angle);
-      const y = center.y + size * Math.sin(angle);
+    for (let i = 0; i < 10; i++) {
+      const angle = (i * Math.PI) / 5 - Math.PI / 2;
+      const radius = i % 2 === 0 ? outerSize : innerSize;
+      const x = center.x + radius * Math.cos(angle);
+      const y = center.y + radius * Math.sin(angle);
 
       if (i === 0) {
         ctx.moveTo(x, y);
@@ -229,28 +228,15 @@ const HexBoard = ({
       }
     }
     ctx.closePath();
+
+    // Fill with color
+    ctx.fillStyle = hexColor;
     ctx.fill();
 
-    // Draw subtle pulsing outline for emphasis
-    const pulseSize = size + 3 + Math.sin(Date.now() / 300) * 2;
-    ctx.strokeStyle = hexColor;
+    // Draw black outline
+    ctx.strokeStyle = '#000';
     ctx.lineWidth = 2;
-    ctx.globalAlpha = 0.5;
-    ctx.beginPath();
-    for (let i = 0; i < 5; i++) {
-      const angle = (i * 4 * Math.PI) / 5 - Math.PI / 2;
-      const x = center.x + pulseSize * Math.cos(angle);
-      const y = center.y + pulseSize * Math.sin(angle);
-
-      if (i === 0) {
-        ctx.moveTo(x, y);
-      } else {
-        ctx.lineTo(x, y);
-      }
-    }
-    ctx.closePath();
     ctx.stroke();
-    ctx.globalAlpha = 1;
   };
 
   const drawTrails = (ctx) => {

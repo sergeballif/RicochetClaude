@@ -215,6 +215,22 @@ function App() {
       setShowTeacherModal(true);
     });
 
+    socket.on('practiceTargetReached', (data) => {
+      // Update practice target and reset move count
+      setGameState(prev => ({
+        ...prev,
+        playerState: {
+          ...prev.playerState,
+          practiceTarget: data.newTarget,
+          practiceMoveCount: data.moveCount,
+          trail: []
+        }
+      }));
+      setSelectedRobot(null);
+      setPossibleMoves([]);
+      setStatusMessage(`🎯 Target reached! New target: ${data.newTarget.color} - ${data.moveCount} moves`);
+    });
+
     socket.on('gameEnd', (data) => {
       setLeaderboard(data.leaderboard);
       setShowModal({ type: 'gameEnd', data });
@@ -600,27 +616,57 @@ function App() {
 
           <div className="panel">
             <h3>Game Status</h3>
-            <div className="score-display">
-              <span className="score-label">Round:</span>
-              <span className="score-value">{gameState.round} / {gameState.maxRounds}</span>
-            </div>
-            <div className="score-display">
-              <span className="score-label">Your Score:</span>
-              <span className="score-value">{gameState.playerState?.totalScore?.toFixed(2) || '0.00'}</span>
-            </div>
-            <div className="score-display">
-              <span className="score-label">Round Score:</span>
-              <span className="score-value">{gameState.playerState?.roundScore?.toFixed(2) || 0}</span>
-            </div>
-            <div className="score-display">
-              <span className="score-label">Current Moves:</span>
-              <span className="score-value">{gameState.playerState?.currentMoves || 0}</span>
-            </div>
-            {gameState.globalShortestMoves !== null && (
-              <div className="score-display">
-                <span className="score-label">Best Solution:</span>
-                <span className="score-value">{gameState.globalShortestMoves}</span>
-              </div>
+            {gameState.round === 0 ? (
+              <>
+                <div style={{
+                  background: 'linear-gradient(135deg, #6a9bc3 0%, #5a8db8 100%)',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  textAlign: 'center',
+                  marginBottom: '15px',
+                  fontWeight: 'bold',
+                  fontSize: '16px'
+                }}>
+                  🎮 Practice Mode
+                </div>
+                <div className="score-display">
+                  <span className="score-label">Moves:</span>
+                  <span className="score-value">{gameState.playerState?.practiceMoveCount || 0}</span>
+                </div>
+                {gameState.playerState?.practiceTarget && (
+                  <div className="score-display">
+                    <span className="score-label">Target:</span>
+                    <span className="score-value" style={{ textTransform: 'capitalize' }}>
+                      {gameState.playerState.practiceTarget.color}
+                    </span>
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <div className="score-display">
+                  <span className="score-label">Round:</span>
+                  <span className="score-value">{gameState.round} / {gameState.maxRounds}</span>
+                </div>
+                <div className="score-display">
+                  <span className="score-label">Your Score:</span>
+                  <span className="score-value">{gameState.playerState?.totalScore?.toFixed(2) || '0.00'}</span>
+                </div>
+                <div className="score-display">
+                  <span className="score-label">Round Score:</span>
+                  <span className="score-value">{gameState.playerState?.roundScore?.toFixed(2) || 0}</span>
+                </div>
+                <div className="score-display">
+                  <span className="score-label">Current Moves:</span>
+                  <span className="score-value">{gameState.playerState?.currentMoves || 0}</span>
+                </div>
+                {gameState.globalShortestMoves !== null && (
+                  <div className="score-display">
+                    <span className="score-label">Best Solution:</span>
+                    <span className="score-value">{gameState.globalShortestMoves}</span>
+                  </div>
+                )}
+              </>
             )}
           </div>
 
