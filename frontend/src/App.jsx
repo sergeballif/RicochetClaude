@@ -33,7 +33,9 @@ function App() {
     const newSocket = io(SOCKET_URL, {
       reconnection: true,
       reconnectionDelay: 1000,
-      reconnectionAttempts: 5
+      reconnectionAttempts: 10,
+      timeout: 60000, // 60 seconds for Render.com wake-up
+      transports: ['websocket', 'polling']
     });
 
     newSocket.on('connect', () => {
@@ -209,10 +211,8 @@ function App() {
       setStatusMessage(`Round Complete! Shortest: ${data.globalShortestMoves} moves`);
       setRoundResults(data);
 
-      // Show modal for teacher/admin only (use role from state, not gameState)
-      if (role === 'teacher' || role === 'admin') {
-        setShowTeacherModal(true);
-      }
+      // Show modal for all players
+      setShowTeacherModal(true);
     });
 
     socket.on('gameEnd', (data) => {
@@ -414,7 +414,7 @@ function App() {
       {/* Teacher Modal for Round End */}
       {showTeacherModal && roundResults && (
         <div className="modal-overlay" onClick={() => setShowTeacherModal(false)}>
-          <div className="modal" style={{ maxWidth: '800px', width: '90%' }} onClick={(e) => e.stopPropagation()}>
+          <div className="modal" style={{ maxWidth: '1200px', width: '95%' }} onClick={(e) => e.stopPropagation()}>
             <h2>Round {gameState?.round} Complete!</h2>
             <p style={{ marginBottom: '20px', color: '#4ade80' }}>
               Shortest Solution: {roundResults.globalShortestMoves} moves
@@ -422,7 +422,7 @@ function App() {
 
             <div style={{
               display: 'grid',
-              gridTemplateColumns: window.innerWidth > 600 ? '1fr 1fr' : '1fr',
+              gridTemplateColumns: window.innerWidth > 900 ? '1fr 1fr 1fr' : window.innerWidth > 600 ? '1fr 1fr' : '1fr',
               gap: '20px'
             }}>
               {/* Round Leaders Column */}
@@ -456,15 +456,47 @@ function App() {
                     ))}
                 </div>
               </div>
+
+              {/* Shortest Solution Board Column */}
+              <div>
+                <h3 style={{ marginBottom: '15px', color: '#4a9eff' }}>Shortest Solution</h3>
+                <div style={{
+                  background: '#1a1a2e',
+                  padding: '15px',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  minHeight: '300px'
+                }}>
+                  {roundResults.globalShortestPath && gameState ? (
+                    <div style={{ width: '100%', height: '350px' }}>
+                      <HexBoard
+                        gameState={gameState}
+                        onHexClick={() => {}}
+                        onWallClick={null}
+                        selectedRobot={null}
+                        possibleMoves={[]}
+                        trail={roundResults.globalShortestPath}
+                        isAdmin={false}
+                      />
+                    </div>
+                  ) : (
+                    <p style={{ color: '#aaa' }}>No solution found</p>
+                  )}
+                </div>
+              </div>
             </div>
 
             <div style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'center' }}>
-              <button
-                onClick={handleStartNextRound}
-                style={{ background: '#4ade80', color: 'white', padding: '12px 30px' }}
-              >
-                Start Next Round
-              </button>
+              {(role === 'teacher' || role === 'admin') && (
+                <button
+                  onClick={handleStartNextRound}
+                  style={{ background: '#4ade80', color: 'white', padding: '12px 30px' }}
+                >
+                  Start Next Round
+                </button>
+              )}
               <button
                 onClick={() => setShowTeacherModal(false)}
                 style={{ background: '#4a9eff', color: 'white', padding: '12px 30px' }}
@@ -483,7 +515,7 @@ function App() {
               <>
                 <h2>{showModal.data?.isFirst ? '🎉 First Solution!' : '✓ Solution Found!'}</h2>
                 <p>Moves: {showModal.data?.moveCount}</p>
-                <p>Score: +{showModal.data?.score}</p>
+                <p>Score: +{showModal.data?.score?.toFixed(2)}</p>
               </>
             )}
 
@@ -510,7 +542,7 @@ function App() {
                   <h3>Scores:</h3>
                   {showModal.data?.roundScores && Object.values(showModal.data.roundScores).map((score, i) => (
                     <div key={i} style={{ marginTop: 10 }}>
-                      {score.name}: +{score.roundScore} (Total: {score.totalScore})
+                      {score.name}: +{score.roundScore.toFixed(2)} (Total: {score.totalScore.toFixed(2)})
                     </div>
                   ))}
                 </div>
@@ -528,7 +560,7 @@ function App() {
                   <div key={i} className="leaderboard-item">
                     <span className="rank">#{i + 1}</span>
                     <span className="name">{player.name}</span>
-                    <span className="score">{player.totalScore}</span>
+                    <span className="score">{player.totalScore.toFixed(2)}</span>
                   </div>
                 ))}
               </>
@@ -574,7 +606,7 @@ function App() {
             </div>
             <div className="score-display">
               <span className="score-label">Your Score:</span>
-              <span className="score-value">{gameState.playerState?.totalScore || 0}</span>
+              <span className="score-value">{gameState.playerState?.totalScore?.toFixed(2) || '0.00'}</span>
             </div>
             <div className="score-display">
               <span className="score-label">Round Score:</span>
@@ -636,7 +668,7 @@ function App() {
                     <span>
                       {player.name} ({player.role})
                     </span>
-                    <span>{player.totalScore || 0}</span>
+                    <span>{player.totalScore?.toFixed(2) || '0.00'}</span>
                     {gameState.playerState?.role === 'admin' && player.role === 'student' && (
                       <button onClick={() => handleRenamePlayer(player.id)}>
                         Rename

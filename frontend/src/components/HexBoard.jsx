@@ -57,12 +57,7 @@ const HexBoard = ({
     ctx.save();
     ctx.translate(offset.x, offset.y);
 
-    // Draw trails first (behind everything)
-    if (trail && trail.length > 0) {
-      drawTrails(ctx);
-    }
-
-    // Draw hexes
+    // Draw hexes first
     const hexes = HexUtils.hexesInRadius(gameState.radius);
     hexes.forEach(hex => {
       drawHex(ctx, hex, false);
@@ -73,6 +68,11 @@ const HexBoard = ({
       possibleMoves.forEach(move => {
         drawHex(ctx, move.position, true, move.direction);
       });
+    }
+
+    // Draw trails (on top of hexes, below walls)
+    if (trail && trail.length > 0) {
+      drawTrails(ctx);
     }
 
     // Draw walls

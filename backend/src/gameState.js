@@ -218,6 +218,7 @@ class GameState {
             p.currentSolution.moveCount,
             p.currentSolution.time
           );
+          // Always update to recalculated score (can go down)
           p.currentSolution.score = recalculatedScore;
           updatedScores[pId] = {
             score: recalculatedScore,
@@ -291,7 +292,7 @@ class GameState {
 
     Object.entries(this.players).forEach(([playerId, player]) => {
       const score = player.currentSolution ? player.currentSolution.score : 0;
-      player.totalScore = (player.totalScore || 0) + score;
+      player.totalScore = Math.round(((player.totalScore || 0) + score) * 100) / 100;
       player.roundScore = score;
       roundScores[playerId] = {
         name: player.name,
