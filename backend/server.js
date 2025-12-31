@@ -12,7 +12,10 @@ const io = new Server(httpServer, {
   cors: {
     origin: '*',
     methods: ['GET', 'POST']
-  }
+  },
+  pingTimeout: 60000, // 60 seconds - how long to wait for pong before considering connection dead
+  pingInterval: 25000, // 25 seconds - how often to send ping
+  connectTimeout: 60000 // 60 seconds - connection timeout for initial connection
 });
 
 // Initialize game state

@@ -246,7 +246,7 @@ class GameState {
     let score = 0;
 
     // Base points for solving
-    score += 5;
+    score += 3;
 
     // Time bonus (if first solution exists)
     if (this.firstSolutionTime) {
@@ -258,7 +258,7 @@ class GameState {
     // Length bonus (if global shortest exists)
     if (this.globalShortestMoves !== null) {
       const movesAboveShortest = moveCount - this.globalShortestMoves;
-      const lengthBonus = Math.max(0, 2 - (0.2 * movesAboveShortest));
+      const lengthBonus = Math.max(0, 4 - (0.2 * movesAboveShortest));
       score += lengthBonus;
     }
 
@@ -459,7 +459,8 @@ class GameState {
         robots: player.robots, // Player's own robot state
         trail: player.trail,
         practiceTarget: player.practiceTarget, // Practice mode target
-        practiceMoveCount: player.practiceMoveCount // Practice mode moves
+        practiceMoveCount: player.practiceMoveCount, // Practice mode moves
+        currentSolution: player.currentSolution // Best solution so far this round
       };
     }
 

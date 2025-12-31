@@ -40,6 +40,12 @@ function App() {
 
     newSocket.on('connect', () => {
       console.log('Connected to server');
+
+      // Auto-rejoin if we were previously in a game
+      if (joined && name) {
+        console.log('Auto-rejoining game as', name);
+        newSocket.emit('join', { name, role, password });
+      }
     });
 
     newSocket.on('disconnect', (reason) => {
@@ -129,18 +135,25 @@ function App() {
 
     socket.on('moveResult', (result) => {
       // Update local game state with move result
-      setGameState(prev => ({
-        ...prev,
-        playerState: {
-          ...prev.playerState,
-          robots: {
-            ...prev.playerState.robots,
-            [result.robotColor]: result.finalPosition
-          },
-          currentMoves: result.currentMoves,
-          trail: result.trail
-        }
-      }));
+      setGameState(prev => {
+        const isPracticeMode = prev.round === 0;
+        return {
+          ...prev,
+          playerState: {
+            ...prev.playerState,
+            robots: {
+              ...prev.playerState.robots,
+              [result.robotColor]: result.finalPosition
+            },
+            // Update the correct move count field based on mode
+            ...(isPracticeMode
+              ? { practiceMoveCount: result.currentMoves }
+              : { currentMoves: result.currentMoves }
+            ),
+            trail: result.trail
+          }
+        };
+      });
       // Keep robot selected - the useEffect will automatically recalculate possible moves
     });
 
@@ -654,7 +667,9 @@ function App() {
                 </div>
                 <div className="score-display">
                   <span className="score-label">Round Score:</span>
-                  <span className="score-value">{gameState.playerState?.roundScore?.toFixed(2) || 0}</span>
+                  <span className="score-value">
+                    {gameState.playerState?.currentSolution?.score?.toFixed(2) || '0.00'}
+                  </span>
                 </div>
                 <div className="score-display">
                   <span className="score-label">Current Moves:</span>
