@@ -629,33 +629,25 @@ function App() {
                 <div className="score-display">
                   <span className="score-label">Finish Bonus:</span>
                   <span className="score-value">
-                    {gameState.playerState?.currentSolution ? '+3.00' : '0.00'}
+                    {gameState.playerState?.currentSolution
+                      ? '+' + gameState.playerState.currentSolution.finishBonus.toFixed(2)
+                      : '0.00'}
                   </span>
                 </div>
                 <div className="score-display">
                   <span className="score-label">Length Bonus:</span>
                   <span className="score-value">
-                    {(() => {
-                      if (!gameState.playerState?.currentSolution || gameState.globalShortestMoves === null) {
-                        return '0.00';
-                      }
-                      const movesAbove = gameState.playerState.currentSolution.moveCount - gameState.globalShortestMoves;
-                      const bonus = Math.max(0, 4 - (0.2 * movesAbove));
-                      return '+' + bonus.toFixed(2);
-                    })()}
+                    {gameState.playerState?.currentSolution
+                      ? '+' + gameState.playerState.currentSolution.lengthBonus.toFixed(2)
+                      : '0.00'}
                   </span>
                 </div>
                 <div className="score-display">
                   <span className="score-label">Speed Bonus:</span>
                   <span className="score-value">
-                    {(() => {
-                      if (!gameState.playerState?.currentSolution || !gameState.firstSolutionTime) {
-                        return '0.00';
-                      }
-                      const secondsElapsed = (gameState.playerState.currentSolution.time - gameState.firstSolutionTime) / 1000;
-                      const bonus = Math.max(0, 3 - (0.05 * secondsElapsed));
-                      return '+' + bonus.toFixed(2);
-                    })()}
+                    {gameState.playerState?.currentSolution
+                      ? '+' + gameState.playerState.currentSolution.speedBonus.toFixed(2)
+                      : '0.00'}
                   </span>
                 </div>
                 <div className="score-display" style={{
@@ -667,7 +659,7 @@ function App() {
                 }}>
                   <span className="score-label">Round Score:</span>
                   <span className="score-value" style={{ color: '#6ab880' }}>
-                    {gameState.playerState?.currentSolution?.score?.toFixed(2) || '0.00'}
+                    {gameState.playerState?.currentSolution?.totalScore?.toFixed(2) || '0.00'}
                   </span>
                 </div>
               </>

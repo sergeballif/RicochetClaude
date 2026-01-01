@@ -225,14 +225,17 @@ class GameState {
     }
 
     // Calculate score for this player
-    const score = this.calculateScore(moveCount, now);
+    const scoreBreakdown = this.calculateScore(moveCount, now);
 
     // Update player's best solution if better
     const player = this.players[playerId];
-    if (!player.currentSolution || score > player.currentSolution.score) {
+    if (!player.currentSolution || scoreBreakdown.totalScore > player.currentSolution.totalScore) {
       player.currentSolution = {
         moveCount,
-        score,
+        totalScore: scoreBreakdown.totalScore,
+        finishBonus: scoreBreakdown.finishBonus,
+        speedBonus: scoreBreakdown.speedBonus,
+        lengthBonus: scoreBreakdown.lengthBonus,
         time: now,
         trail: [...trail]
       };
@@ -248,9 +251,12 @@ class GameState {
             p.currentSolution.time
           );
           // Always update to recalculated score (can go down)
-          p.currentSolution.score = recalculatedScore;
+          p.currentSolution.totalScore = recalculatedScore.totalScore;
+          p.currentSolution.finishBonus = recalculatedScore.finishBonus;
+          p.currentSolution.speedBonus = recalculatedScore.speedBonus;
+          p.currentSolution.lengthBonus = recalculatedScore.lengthBonus;
           updatedScores[pId] = {
-            score: recalculatedScore,
+            score: recalculatedScore.totalScore,
             moveCount: p.currentSolution.moveCount
           };
         }
@@ -260,7 +266,7 @@ class GameState {
     return {
       solved: true,
       isFirst: this.firstSolutionPlayer === playerId,
-      score,
+      score: scoreBreakdown.totalScore,
       moveCount,
       globalShortestMoves: this.globalShortestMoves,
       newGlobalShortest,
@@ -269,29 +275,33 @@ class GameState {
   }
 
   /**
-   * Calculate score for a solution
+   * Calculate score for a solution with breakdown
    */
   calculateScore(moveCount, solutionTime) {
-    let score = 0;
-
-    // Base points for solving
-    score += 3;
+    const finishBonus = 3;
 
     // Time bonus (if first solution exists)
+    let speedBonus = 0;
     if (this.firstSolutionTime) {
       const secondsElapsed = (solutionTime - this.firstSolutionTime) / 1000;
-      const timeBonus = Math.max(0, 3 - (0.05 * secondsElapsed));
-      score += timeBonus;
+      speedBonus = Math.max(0, 3 - (0.05 * secondsElapsed));
     }
 
     // Length bonus (if global shortest exists)
+    let lengthBonus = 0;
     if (this.globalShortestMoves !== null) {
       const movesAboveShortest = moveCount - this.globalShortestMoves;
-      const lengthBonus = Math.max(0, 4 - (0.2 * movesAboveShortest));
-      score += lengthBonus;
+      lengthBonus = Math.max(0, 4 - (0.2 * movesAboveShortest));
     }
 
-    return Math.round(score * 100) / 100; // Round to 2 decimal places
+    const totalScore = finishBonus + speedBonus + lengthBonus;
+
+    return {
+      finishBonus: Math.round(finishBonus * 100) / 100,
+      speedBonus: Math.round(speedBonus * 100) / 100,
+      lengthBonus: Math.round(lengthBonus * 100) / 100,
+      totalScore: Math.round(totalScore * 100) / 100
+    };
   }
 
   /**
@@ -320,7 +330,7 @@ class GameState {
     const roundScores = {};
 
     Object.entries(this.players).forEach(([playerId, player]) => {
-      const score = player.currentSolution ? player.currentSolution.score : 0;
+      const score = player.currentSolution ? player.currentSolution.totalScore : 0;
       player.totalScore = Math.round(((player.totalScore || 0) + score) * 100) / 100;
       player.roundScore = score;
       roundScores[playerId] = {
