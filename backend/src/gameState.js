@@ -48,6 +48,35 @@ class GameState {
     this.allWalls = this.boardGenerator.getAllWalls(this.internalWalls);
   }
 
+  resetToPracticeMode() {
+    // Reset to round 0 (practice mode)
+    this.currentRound = 0;
+    this.target = null;
+    this.roundStartTime = null;
+    this.firstSolutionTime = null;
+    this.firstSolutionPlayer = null;
+    this.countdownStartTime = null;
+    this.globalShortestMoves = null;
+    this.globalShortestPath = null;
+    this.roundFinalized = false;
+
+    // Give each player their own random practice positions
+    Object.keys(this.players).forEach(playerId => {
+      const playerRobots = this.boardGenerator.initializeRobots();
+      const occupiedHexes = Object.values(playerRobots);
+      const practiceTarget = this.boardGenerator.generateTarget(occupiedHexes);
+
+      this.players[playerId].robots = playerRobots;
+      this.players[playerId].practiceTarget = practiceTarget;
+      this.players[playerId].practiceMoveCount = 0;
+      this.players[playerId].currentMoves = 0;
+      this.players[playerId].currentSolution = null;
+      this.players[playerId].trail = [];
+      this.players[playerId].roundScore = 0;
+      // Keep totalScore - don't reset between games
+    });
+  }
+
   startNewRound() {
     if (this.currentRound >= this.maxRounds) {
       return { gameEnded: true };

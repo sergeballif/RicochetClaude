@@ -248,9 +248,17 @@ io.on('connection', (socket) => {
     const newRound = gameState.startNewRound();
 
     if (newRound.gameEnded) {
-      // Game over, send final leaderboard
+      // Game over, send final leaderboard and reset to practice mode
       const leaderboard = gameState.getLeaderboard();
       io.emit('gameEnd', { leaderboard });
+
+      // Reset to practice mode
+      gameState.resetToPracticeMode();
+
+      // Send updated practice mode state to all players
+      Object.keys(gameState.players).forEach(playerId => {
+        io.to(playerId).emit('gameState', gameState.getStateForClient(playerId));
+      });
       return;
     }
 

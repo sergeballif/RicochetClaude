@@ -592,6 +592,12 @@ function App() {
                     <span className="score">{player.totalScore.toFixed(2)}</span>
                   </div>
                 ))}
+                <button
+                  onClick={() => setShowModal(null)}
+                  style={{ marginTop: '20px' }}
+                >
+                  Back to Practice Mode
+                </button>
               </>
             )}
           </div>
@@ -613,17 +619,58 @@ function App() {
 
         <div className="sidebar">
           <div className="panel" style={{ background: '#1a1a2e', border: '2px solid #4a9eff' }}>
-            <h3>Status</h3>
-            <p style={{ marginTop: '10px', fontSize: '14px', lineHeight: '1.5' }}>{statusMessage}</p>
-            {lastSolution && (
-              <div style={{ marginTop: '10px', padding: '10px', background: '#2a2a3e', borderRadius: '5px' }}>
-                <div style={{ fontSize: '12px', color: '#4ade80' }}>
-                  Last Solution: {lastSolution.moveCount} moves
+            <h3>Round Status</h3>
+            {gameState.round === 0 ? (
+              <p style={{ marginTop: '10px', fontSize: '14px', lineHeight: '1.5', color: '#aaa' }}>
+                Practice mode - scores not tracked
+              </p>
+            ) : (
+              <>
+                <div className="score-display">
+                  <span className="score-label">Finish Bonus:</span>
+                  <span className="score-value">
+                    {gameState.playerState?.currentSolution ? '+3.00' : '0.00'}
+                  </span>
                 </div>
-                <div style={{ fontSize: '12px', color: '#4ade80' }}>
-                  Score: +{lastSolution.score.toFixed(2)}
+                <div className="score-display">
+                  <span className="score-label">Length Bonus:</span>
+                  <span className="score-value">
+                    {(() => {
+                      if (!gameState.playerState?.currentSolution || gameState.globalShortestMoves === null) {
+                        return '0.00';
+                      }
+                      const movesAbove = gameState.playerState.currentSolution.moveCount - gameState.globalShortestMoves;
+                      const bonus = Math.max(0, 4 - (0.2 * movesAbove));
+                      return '+' + bonus.toFixed(2);
+                    })()}
+                  </span>
                 </div>
-              </div>
+                <div className="score-display">
+                  <span className="score-label">Speed Bonus:</span>
+                  <span className="score-value">
+                    {(() => {
+                      if (!gameState.playerState?.currentSolution || !gameState.firstSolutionTime) {
+                        return '0.00';
+                      }
+                      const secondsElapsed = (gameState.playerState.currentSolution.time - gameState.firstSolutionTime) / 1000;
+                      const bonus = Math.max(0, 3 - (0.05 * secondsElapsed));
+                      return '+' + bonus.toFixed(2);
+                    })()}
+                  </span>
+                </div>
+                <div className="score-display" style={{
+                  marginTop: '10px',
+                  paddingTop: '10px',
+                  borderTop: '1px solid #444',
+                  fontWeight: 'bold',
+                  fontSize: '16px'
+                }}>
+                  <span className="score-label">Round Score:</span>
+                  <span className="score-value" style={{ color: '#6ab880' }}>
+                    {gameState.playerState?.currentSolution?.score?.toFixed(2) || '0.00'}
+                  </span>
+                </div>
+              </>
             )}
           </div>
 
@@ -664,12 +711,6 @@ function App() {
                 <div className="score-display">
                   <span className="score-label">Your Score:</span>
                   <span className="score-value">{gameState.playerState?.totalScore?.toFixed(2) || '0.00'}</span>
-                </div>
-                <div className="score-display">
-                  <span className="score-label">Round Score:</span>
-                  <span className="score-value">
-                    {gameState.playerState?.currentSolution?.score?.toFixed(2) || '0.00'}
-                  </span>
                 </div>
                 <div className="score-display">
                   <span className="score-label">Current Moves:</span>
