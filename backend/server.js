@@ -297,6 +297,29 @@ io.on('connection', (socket) => {
     });
   });
 
+  // Handle export walls (admin only) - logs wall configuration to console
+  socket.on('exportWalls', () => {
+    const player = gameState.players[socket.id];
+
+    if (!player || player.role !== 'admin') {
+      socket.emit('error', { message: 'Unauthorized' });
+      return;
+    }
+
+    const wallsArray = Array.from(gameState.internalWalls);
+
+    console.log('\n========== WALL CONFIGURATION ==========');
+    console.log('Copy the array below and paste it to set as default:\n');
+    console.log(JSON.stringify(wallsArray, null, 2));
+    console.log('\nTotal walls:', wallsArray.length);
+    console.log('========================================\n');
+
+    socket.emit('wallsExported', {
+      message: 'Wall configuration logged to server console',
+      wallCount: wallsArray.length
+    });
+  });
+
   // Handle toggle wall (admin only)
   socket.on('toggleWall', (data) => {
     const player = gameState.players[socket.id];

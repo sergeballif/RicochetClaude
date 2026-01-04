@@ -263,6 +263,10 @@ function App() {
       }));
     });
 
+    socket.on('wallsExported', (data) => {
+      alert(`${data.message}\n\nCheck the Render.com logs or server terminal.\nWalls exported: ${data.wallCount}`);
+    });
+
     socket.on('timerUpdate', (data) => {
       setGameState(prev => ({
         ...prev,
@@ -362,6 +366,10 @@ function App() {
 
   const handleRegenerateWalls = () => {
     socket.emit('regenerateWalls');
+  };
+
+  const handleExportWalls = () => {
+    socket.emit('exportWalls');
   };
 
   const handleRenamePlayer = (playerId) => {
@@ -745,9 +753,14 @@ function App() {
                 </>
               )}
               {gameState.playerState?.role === 'admin' && (
-                <button onClick={handleRegenerateWalls} className="danger">
-                  Regenerate Walls
-                </button>
+                <>
+                  <button onClick={handleRegenerateWalls} className="danger">
+                    Regenerate Walls
+                  </button>
+                  <button onClick={handleExportWalls}>
+                    Export Walls to Console
+                  </button>
+                </>
               )}
             </div>
           </div>

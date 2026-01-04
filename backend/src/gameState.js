@@ -1,6 +1,22 @@
 const HexUtils = require('./hexUtils');
 const BoardGenerator = require('./boardGenerator');
 
+// ========== CUSTOM WALL CONFIGURATION ==========
+// To set a custom wall layout:
+// 1. Use admin mode to design your wall layout
+// 2. Click "Export Walls to Console" button
+// 3. Copy the array from the server logs
+// 4. Paste it into the CUSTOM_WALLS array below
+// 5. Set USE_CUSTOM_WALLS = true
+
+const USE_CUSTOM_WALLS = false; // Set to true to use custom walls
+
+const CUSTOM_WALLS = [
+  // Paste your exported wall configuration here
+  // Example: "0,0,0|0,1,-1", "0,0,0|1,0,-1", etc.
+];
+// ===============================================
+
 class GameState {
   constructor() {
     this.boardGenerator = new BoardGenerator(6);
@@ -44,7 +60,13 @@ class GameState {
   }
 
   regenerateWalls() {
-    this.internalWalls = this.boardGenerator.generateWalls(0.15);
+    if (USE_CUSTOM_WALLS && CUSTOM_WALLS.length > 0) {
+      // Use custom wall configuration
+      this.internalWalls = new Set(CUSTOM_WALLS);
+    } else {
+      // Generate random walls
+      this.internalWalls = this.boardGenerator.generateWalls(0.15);
+    }
     this.allWalls = this.boardGenerator.getAllWalls(this.internalWalls);
   }
 
